@@ -1,5 +1,6 @@
 # Verensokerin Saadon Dashboard
-Vibekoodattu GPT5.5 avulla
+Vibekoodattu GPT5.5 avulla, kouluprojekti
+Huomio! Tätä koodia ei miltään osalta ole tarkoitettu lääkinnällisiin tarkoituksiin, kyseessä on teoreettinen automaatioalan harjoitustyö.
 
 ## Asennus
 
