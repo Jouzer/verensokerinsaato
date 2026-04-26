@@ -1,0 +1,6 @@
+numpy>=2.0
+scipy>=1.14
+control>=0.10
+dash>=3.0
+plotly>=6.0
+gunicorn>=23.0
