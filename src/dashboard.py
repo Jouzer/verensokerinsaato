@@ -237,23 +237,6 @@ def _layout() -> html.Main:
                 ],
             ),
             html.Section(
-                className="trend-band",
-                children=[
-                    html.Div(
-                        className="section-title",
-                        children=[
-                            html.H2("Live-trendi"),
-                            html.Span("60 min näkymä"),
-                        ],
-                    ),
-                    dcc.Graph(
-                        id="main-trend",
-                        className="main-graph",
-                        config={"displayModeBar": False, "responsive": True},
-                    ),
-                ],
-            ),
-            html.Section(
                 className="small-trend-grid",
                 children=[
                     dcc.Graph(
@@ -418,7 +401,7 @@ def _register_callbacks(app: Dash) -> None:
         return is_paused, "Jatka" if is_paused else "Pysäytä"
 
     @app.callback(
-        Output("main-trend", "figure"),
+#        Output("main-trend", "figure"),
         Output("glucose-trend", "figure"),
         Output("insulin-trend", "figure"),
         Output("glucagon-trend", "figure"),
