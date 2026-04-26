@@ -1,7 +1,5 @@
 # Verensokerin Saadon Dashboard
-
-Ensimmainen pala on tekstipohjainen simulaatiomalli. Dashboard rakennetaan
-myohemmin taman rajapinnan paalle.
+Vibekoodattu GPT5.5 avulla
 
 ## Asennus
 
@@ -38,13 +36,7 @@ Paikallinen Dash-dashboard:
 python app.py
 ```
 
-Selainosoite:
-
-```text
-http://127.0.0.1:8050
-```
-
-Railway-kaynnistys on maaritelty tiedostossa `Procfile`:
+Railway-kaynnistys on määritelty tiedostossa `Procfile`:
 
 ```text
 web: gunicorn app:server --bind 0.0.0.0:$PORT --workers 1
@@ -56,17 +48,17 @@ GUI:n kannalta oleellinen rajapinta on tiedostossa `src/simulation.py`:
 - `SimulationOutputs`
 - `GlucoseControlSimulation.step(inputs)`
 
-Taman ansiosta koko `simulation.py` voidaan vaihtaa myohemmin toiseen
+Taman ansiosta koko `simulation.py` voidaan vaihtaa myähemmin toiseen
 toteutukseen, kun lopullinen Simulinkista portattu malli on tiedossa.
 
 ## Mallin nykyinen idea
 
 Prosessilohkot on maaritelty `python-control`-transfer funktioina ja muunnettu
 diskreeteiksi lohkoiksi liveajoa varten. Simulaatio etenee yhden aika-askeleen
-kerrallaan, joten dashboardin ei tarvitse laskea koko vastetta uudestaan joka
-paivityksella.
+kerrallaan, jotta dashboardin ei tarvitse laskea koko vastetta uudestaan joka
+päivityksella.
 
 PID-saatimet ovat mallin sisalla, mutta ne on toteutettu erillisina
 laskentalohkoina, jotta ulostulorajat ja kahden vastakkaisen saatajan
-aktivointilogiikka pysyvat selkeina. Ne voidaan myohemmin vaihtaa tarkemmin
+aktivointilogiikka pysyvät selkeinä. Ne voidaan myohemmin vaihtaa tarkemmin
 Simulink-rakennetta vastaaviksi lohkoiksi, jos lopullinen malli sita vaatii.
