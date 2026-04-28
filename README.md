@@ -29,6 +29,17 @@ Liikunnan automaattinen testiajo:
 python run_live.py --exercise-at 0 --exercise-minutes 30 --exercise-intensity 0.7
 ```
 
+Simulink-kaaviosta portatun rinnakkaismallin tekstiajo:
+
+```powershell
+python run_simulation_diagram.py
+```
+
+Uusi malli on tiedostossa `src/simulation_diagram.py`. Se kayttaa samaa
+`SimulationInputs` -> `SimulationOutputs` -rajapintaa kuin alkuperainen
+`src/simulation.py`, mutta sisainen rakenne seuraa Simulink-lohkokaaviota
+tarkemmin.
+
 ## Dashboard
 
 Paikallinen Dash-dashboard:

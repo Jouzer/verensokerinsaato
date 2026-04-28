@@ -7,3 +7,5 @@ __pycache__/
 dash-server.log
 dash.out.log
 dash.err.log
+server.out.log
+server.err.log

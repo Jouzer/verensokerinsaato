@@ -12,12 +12,17 @@ import dash
 from dash import Dash, Input, Output, State, callback_context, dcc, html
 import plotly.graph_objects as go
 
-from src.simulation import (
-    GlucoseControlSimulation,
-    ModelSettings,
-    PIDSettings,
-    SimulationInputs,
-)
+from src.simulation import PIDSettings, SimulationInputs
+from src.simulation_diagram import DiagramGlucoseControlSimulation, DiagramModelSettings
+
+# Simulation backend selection:
+# Before the Simulink-style model, dashboard used:
+#   from src.simulation import GlucoseControlSimulation, ModelSettings
+#   ActiveSimulation = GlucoseControlSimulation
+#   ActiveSettings = ModelSettings
+# To restore the old demo model, switch these two aliases back.
+ActiveSimulation = DiagramGlucoseControlSimulation
+ActiveSettings = DiagramModelSettings
 
 
 COLORS = {
@@ -32,27 +37,30 @@ COLORS = {
 
 MAX_HISTORY_POINTS = 8 * 60
 VISIBLE_WINDOW_MINUTES = 60
+DEATH_THRESHOLD_MMOL_L = 1.0
 
 
 @dataclass
 class RuntimeState:
-    settings: ModelSettings = field(default_factory=ModelSettings)
-    sim: GlucoseControlSimulation = field(init=False)
+    settings: ActiveSettings = field(default_factory=ActiveSettings)
+    sim: ActiveSimulation = field(init=False)
     history: list[dict[str, float]] = field(default_factory=list)
     pending_inputs: deque[SimulationInputs] = field(default_factory=deque)
     messages: deque[str] = field(default_factory=lambda: deque(maxlen=6))
     minute_budget: float = 0.0
+    is_dead: bool = False
 
     def __post_init__(self) -> None:
         self.reset(self.settings, "Simulaatio alustettu.")
 
-    def reset(self, settings: ModelSettings | None = None, message: str | None = None) -> None:
+    def reset(self, settings: ActiveSettings | None = None, message: str | None = None) -> None:
         if settings is not None:
             self.settings = settings
-        self.sim = GlucoseControlSimulation(self.settings)
+        self.sim = ActiveSimulation(self.settings)
         self.history = [self.sim.last_output.as_dict()]
         self.pending_inputs.clear()
         self.minute_budget = 0.0
+        self.is_dead = False
         if message:
             self.messages.appendleft(message)
 
@@ -258,6 +266,28 @@ def _layout() -> html.Main:
                 ],
             ),
             _pid_modal(settings, insulin, glucagon),
+            html.Div(
+                id="death-overlay",
+                className="death-overlay",
+                children=[
+                    html.Div(
+                        className="death-panel",
+                        children=[
+                            html.Div("YOU DIED", className="death-title"),
+                            html.Div(
+                                "Verensokeri laski alle 1.0 mmol/L",
+                                className="death-subtitle",
+                            ),
+                            html.Button(
+                                "Reset",
+                                id="death-reset-button",
+                                className="death-reset-button",
+                                n_clicks=0,
+                            ),
+                        ],
+                    )
+                ],
+            ),
         ],
     )
 
@@ -273,7 +303,7 @@ def _metric(metric_id: str, label: str, value: str) -> html.Div:
 
 
 def _pid_modal(
-    settings: ModelSettings,
+    settings: ActiveSettings,
     insulin: PIDSettings,
     glucagon: PIDSettings,
 ) -> html.Div:
@@ -410,10 +440,12 @@ def _register_callbacks(app: Dash) -> None:
         Output("metric-glucagon", "children"),
         Output("metric-time", "children"),
         Output("event-log", "children"),
+        Output("death-overlay", "className"),
         Input("sim-timer", "n_intervals"),
         Input("carbs-submit", "n_clicks"),
         Input("exercise-submit", "n_clicks"),
         Input("reset-button", "n_clicks"),
+        Input("death-reset-button", "n_clicks"),
         Input("apply-pid", "n_clicks"),
         State("carbs-g", "value"),
         State("carb-absorption", "value"),
@@ -439,6 +471,7 @@ def _register_callbacks(app: Dash) -> None:
         _carb_clicks: int,
         _exercise_clicks: int,
         _reset_clicks: int,
+        _death_reset_clicks: int,
         _apply_clicks: int,
         carbs_g: float | None,
         carb_absorption: float | None,
@@ -461,9 +494,9 @@ def _register_callbacks(app: Dash) -> None:
     ) -> tuple[Any, ...]:
         trigger = callback_context.triggered_id
         event_added = False
-        should_advance = trigger == "sim-timer"
+        should_advance = trigger == "sim-timer" and not RUNTIME.is_dead
 
-        if trigger == "reset-button":
+        if trigger in {"reset-button", "death-reset-button"}:
             RUNTIME.reset(message="Simulaatio nollattu.")
         elif trigger == "apply-pid":
             settings = _settings_from_pid_values(
@@ -519,6 +552,9 @@ def _register_callbacks(app: Dash) -> None:
         if should_advance:
             _advance_simulation(_speed_or_default(sim_speed), force_one_step=event_added)
 
+        if RUNTIME.history[-1]["blood_glucose_mmol_l"] < DEATH_THRESHOLD_MMOL_L:
+            RUNTIME.is_dead = True
+
         return _dashboard_payload()
 
 
@@ -570,6 +606,7 @@ def _dashboard_payload() -> tuple[Any, ...]:
         f"{latest['glucagon_ug_min']:.2f} ug/min",
         f"{latest['time_min']:.0f} min",
         _event_log(),
+        "death-overlay death-visible" if RUNTIME.is_dead else "death-overlay",
     )
 
 
@@ -637,12 +674,14 @@ def _settings_from_pid_values(
     glucagon_kd: float | None,
     glucagon_max: float | None,
     glucagon_deadband: float | None,
-) -> ModelSettings:
+) -> ActiveSettings:
     current = RUNTIME.settings
-    return replace(
-        current,
-        target_glucose_mmol_l=_number_or_default(target, current.target_glucose_mmol_l),
-        insulin_pid=PIDSettings(
+    updates: dict[str, Any] = {
+        "target_glucose_mmol_l": _number_or_default(
+            target,
+            current.target_glucose_mmol_l,
+        ),
+        "insulin_pid": PIDSettings(
             kp=_number_or_default(insulin_kp, current.insulin_pid.kp),
             ki=_number_or_default(insulin_ki, current.insulin_pid.ki),
             kd=_number_or_default(insulin_kd, current.insulin_pid.kd),
@@ -653,7 +692,7 @@ def _settings_from_pid_values(
                 _number_or_default(insulin_deadband, current.insulin_pid.deadband_mmol_l),
             ),
         ),
-        glucagon_pid=PIDSettings(
+        "glucagon_pid": PIDSettings(
             kp=_number_or_default(glucagon_kp, current.glucagon_pid.kp),
             ki=_number_or_default(glucagon_ki, current.glucagon_pid.ki),
             kd=_number_or_default(glucagon_kd, current.glucagon_pid.kd),
@@ -667,7 +706,23 @@ def _settings_from_pid_values(
                 _number_or_default(glucagon_deadband, current.glucagon_pid.deadband_mmol_l),
             ),
         ),
-    )
+    }
+
+    # The Simulink-style backend has extra saturation settings outside the PID
+    # blocks. Keep these in sync with the modal's max fields. The original demo
+    # backend does not have these attributes, so alias-based rollback still works.
+    if hasattr(current, "insulin_output_max_u_min"):
+        updates["insulin_output_max_u_min"] = max(
+            0.0,
+            _number_or_default(insulin_max, current.insulin_output_max_u_min),
+        )
+    if hasattr(current, "glucagon_output_max_ug_min"):
+        updates["glucagon_output_max_ug_min"] = max(
+            0.0,
+            _number_or_default(glucagon_max, current.glucagon_output_max_ug_min),
+        )
+
+    return replace(current, **updates)
 
 
 def _speed_or_default(value: float | None) -> float:
