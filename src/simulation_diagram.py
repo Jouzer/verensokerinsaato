@@ -45,11 +45,11 @@ class DiagramModelSettings:
     # Keep below the dashboard's "YOU DIED" easter egg threshold (1.0 mmol/L)
     # so extreme tuning/input can trigger the overlay instead of being clipped.
     minimum_glucose_mmol_l: float = 0.0
-    maximum_glucose_mmol_l: float = 18.0
+    maximum_glucose_mmol_l: float = 40.0
 
     # Dashboard grams are scaled before entering the diagram's meal pulse.
     # Increase this if meals look too weak; decrease it if meals dominate.
-    meal_pulse_scale: float = 0.06
+    meal_pulse_scale: float = 1.0
     default_carb_absorption_minutes: float = 80.0
 
     # Exercise intensity is dimensionless. 1.0 means "fairly hard aerobic work".
