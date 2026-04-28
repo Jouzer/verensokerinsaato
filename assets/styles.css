@@ -62,7 +62,6 @@ input {
 
 .metric,
 .panel,
-.trend-band,
 .small-trend-grid > div {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -190,28 +189,6 @@ input[type="number"]:focus {
   line-height: 1.45;
   margin-top: 14px;
   padding-top: 12px;
-}
-
-.trend-band {
-  margin: 0 auto 18px;
-  max-width: 1440px;
-  padding: 14px 16px 8px;
-}
-
-.section-title {
-  align-items: baseline;
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.section-title span {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.main-graph {
-  min-height: 430px;
 }
 
 .small-trend-grid {

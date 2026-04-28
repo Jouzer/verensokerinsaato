@@ -237,23 +237,6 @@ def _layout() -> html.Main:
                 ],
             ),
             html.Section(
-                className="trend-band",
-                children=[
-                    html.Div(
-                        className="section-title",
-                        children=[
-                            html.H2("Live-trendi"),
-                            html.Span("60 min näkymä"),
-                        ],
-                    ),
-                    dcc.Graph(
-                        id="main-trend",
-                        className="main-graph",
-                        config={"displayModeBar": False, "responsive": True},
-                    ),
-                ],
-            ),
-            html.Section(
                 className="small-trend-grid",
                 children=[
                     dcc.Graph(
@@ -418,7 +401,6 @@ def _register_callbacks(app: Dash) -> None:
         return is_paused, "Jatka" if is_paused else "Pysäytä"
 
     @app.callback(
-        Output("main-trend", "figure"),
         Output("glucose-trend", "figure"),
         Output("insulin-trend", "figure"),
         Output("glucagon-trend", "figure"),
@@ -561,7 +543,6 @@ def _dashboard_payload() -> tuple[Any, ...]:
     history = RUNTIME.history
     latest = history[-1]
     return (
-        _main_figure(history),
         _single_figure(
             history,
             "blood_glucose_mmol_l",
@@ -590,95 +571,6 @@ def _dashboard_payload() -> tuple[Any, ...]:
         f"{latest['time_min']:.0f} min",
         _event_log(),
     )
-
-
-def _main_figure(history: list[dict[str, float]]) -> go.Figure:
-    x = _series(history, "time_min")
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=_series(history, "blood_glucose_mmol_l"),
-            name="Verensokeri",
-            mode="lines",
-            line={"color": COLORS["glucose"], "width": 3},
-            yaxis="y",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=_series(history, "insulin_u_min"),
-            name="Insuliini",
-            mode="lines",
-            line={"color": COLORS["insulin"], "width": 2.4},
-            yaxis="y2",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=_series(history, "glucagon_ug_min"),
-            name="Glukagoni",
-            mode="lines",
-            line={"color": COLORS["glucagon"], "width": 2.4},
-            yaxis="y3",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=_series(history, "carbs_on_board_g"),
-            name="HH imeytymässä",
-            mode="lines",
-            line={"color": COLORS["carbs"], "width": 2, "dash": "dot"},
-            yaxis="y4",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=_series(history, "target_glucose_mmol_l"),
-            name="Tavoite",
-            mode="lines",
-            line={"color": COLORS["target"], "width": 1.5, "dash": "dash"},
-            yaxis="y",
-        )
-    )
-
-    fig.update_layout(
-        template="plotly_white",
-        height=430,
-        margin={"l": 74, "r": 86, "t": 22, "b": 48},
-        hovermode="x unified",
-        legend={
-            "orientation": "h",
-            "yanchor": "bottom",
-            "y": 1.02,
-            "xanchor": "left",
-            "x": 0,
-        },
-        xaxis={
-            "title": "Simulaatioaika (min)",
-            "range": _x_range(x),
-            "domain": [0.11, 0.88],
-            "gridcolor": COLORS["grid"],
-        },
-        yaxis=_axis("Verensokeri (mmol/L)", COLORS["glucose"], "left"),
-        yaxis2=_axis("Insuliini (U/min)", COLORS["insulin"], "right"),
-        yaxis3={
-            **_axis("Glukagoni (ug/min)", COLORS["glucagon"], "right"),
-            "anchor": "free",
-            "position": 0.97,
-        },
-        yaxis4={
-            **_axis("HH (g)", COLORS["carbs"], "left"),
-            "anchor": "free",
-            "position": 0.04,
-        },
-        font={"family": "Inter, Segoe UI, Arial, sans-serif", "color": COLORS["text"]},
-    )
-    return fig
 
 
 def _single_figure(
@@ -714,21 +606,6 @@ def _single_figure(
         font={"family": "Inter, Segoe UI, Arial, sans-serif", "color": COLORS["text"]},
     )
     return fig
-
-
-def _axis(title: str, color: str, side: str) -> dict[str, Any]:
-    axis: dict[str, Any] = {
-        "title": {"text": title, "font": {"color": color}},
-        "tickfont": {"color": color},
-        "side": side,
-        "showgrid": side == "left",
-        "gridcolor": COLORS["grid"],
-        "zeroline": False,
-    }
-    if side == "right":
-        axis["overlaying"] = "y"
-        axis["showgrid"] = False
-    return axis
 
 
 def _series(history: list[dict[str, float]], key: str) -> list[float]:
