@@ -40,8 +40,8 @@ class DiagramModelSettings:
     """
 
     dt_minutes: float = 1.0
-    initial_glucose_mmol_l: float = 5.5
-    target_glucose_mmol_l: float = 5.5
+    initial_glucose_mmol_l: float = 7.5
+    target_glucose_mmol_l: float = 8.0
     # Keep below the dashboard's "YOU DIED" easter egg threshold (1.0 mmol/L)
     # so extreme tuning/input can trigger the overlay instead of being clipped.
     minimum_glucose_mmol_l: float = 0.0
@@ -57,10 +57,10 @@ class DiagramModelSettings:
     default_exercise_intensity: float = 0.7
 
     # Saturation blocks. To effectively disable one, set a very wide range.
-    insulin_error_max_mmol_l: float = 8.0
-    glucagon_error_max_mmol_l: float = 4.0
+    insulin_error_max_mmol_l: float = 100.0
+    glucagon_error_max_mmol_l: float = 100.0
     insulin_output_min_u_min: float = 0.0
-    insulin_output_max_u_min: float = 0.025
+    insulin_output_max_u_min: float = 1.0
     glucagon_output_min_ug_min: float = 0.0
     glucagon_output_max_ug_min: float = 80.0
     liver_flux_min_mmol_l_min: float = -0.10
@@ -69,20 +69,20 @@ class DiagramModelSettings:
     # PID guesses. These are deliberately conservative because this diagram has
     # long delays; aggressive integral action causes slow oscillation quickly.
     insulin_pid: PIDSettings = PIDSettings(
-        kp=0.025,
-        ki=0.055,
-        kd=0.0,
+        kp=0.0001,
+        ki=0.0,
+        kd=0.5,
         output_min=0.0,
         output_max=1.0,
-        deadband_mmol_l=0.5,
+        deadband_mmol_l=0.1,
     )
     glucagon_pid: PIDSettings = PIDSettings(
-        kp=4.0,
-        ki=1.0,
-        kd=0.0,
+        kp=0.4,
+        ki=0,
+        kd=5,
         output_min=0.0,
         output_max=80.0,
-        deadband_mmol_l=0.15,
+        deadband_mmol_l=0.1,
     )
 
 

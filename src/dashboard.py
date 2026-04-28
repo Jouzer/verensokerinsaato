@@ -37,7 +37,7 @@ COLORS = {
 
 MAX_HISTORY_POINTS = 8 * 60
 VISIBLE_WINDOW_MINUTES = 60
-DEATH_THRESHOLD_MMOL_L = 1.0
+DEATH_THRESHOLD_MMOL_L = 0.1
 
 
 @dataclass
@@ -211,7 +211,7 @@ def _layout() -> html.Main:
                             dcc.Input(
                                 id="sim-speed",
                                 type="number",
-                                value=1,
+                                value=5,
                                 min=0.25,
                                 max=20,
                                 step=0.25,
@@ -343,12 +343,12 @@ def _pid_modal(
                                 insulin.deadband_mmol_l,
                                 step=0.01,
                             ),
-                            _number_field("Insuliini Kp", "insulin-kp", insulin.kp, step=0.001),
-                            _number_field("Insuliini Ki", "insulin-ki", insulin.ki, step=0.0001),
-                            _number_field("Insuliini Kd", "insulin-kd", insulin.kd, step=0.001),
-                            _number_field("Glukagoni Kp", "glucagon-kp", glucagon.kp, step=0.1),
-                            _number_field("Glukagoni Ki", "glucagon-ki", glucagon.ki, step=0.01),
-                            _number_field("Glukagoni Kd", "glucagon-kd", glucagon.kd, step=0.1),
+                            _number_field("Insuliini Kp", "insulin-kp", insulin.kp, step="any"),
+                            _number_field("Insuliini Ki", "insulin-ki", insulin.ki, step="any"),
+                            _number_field("Insuliini Kd", "insulin-kd", insulin.kd, step="any"),
+                            _number_field("Glukagoni Kp", "glucagon-kp", glucagon.kp, step="any"),
+                            _number_field("Glukagoni Ki", "glucagon-ki", glucagon.ki, step="any"),
+                            _number_field("Glukagoni Kd", "glucagon-kd", glucagon.kd, step="any"),
                             _number_field(
                                 "Glukagoni max (ug/min)",
                                 "glucagon-max",
@@ -380,7 +380,7 @@ def _pid_modal(
     )
 
 
-def _number_field(label: str, input_id: str, value: float, step: float) -> html.Div:
+def _number_field(label: str, input_id: str, value: float, step: float | str) -> html.Div:
     return html.Div(
         className="field",
         children=[
