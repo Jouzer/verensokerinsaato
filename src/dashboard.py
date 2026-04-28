@@ -275,7 +275,7 @@ def _layout() -> html.Main:
                         children=[
                             html.Div("YOU DIED", className="death-title"),
                             html.Div(
-                                "Verensokeri laski alle 1.0 mmol/L",
+                                "Verensokeri laski alle 0.1 mmol/L",
                                 className="death-subtitle",
                             ),
                             html.Button(
