@@ -77,7 +77,7 @@ class DiagramModelSettings:
         deadband_mmol_l=0.1,
     )
     glucagon_pid: PIDSettings = PIDSettings(
-        kp=0.4,
+        kp=0.8,
         ki=0,
         kd=5,
         output_min=0.0,
